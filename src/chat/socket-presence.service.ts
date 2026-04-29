@@ -1,16 +1,10 @@
 import { Injectable } from '@nestjs/common';
+import {
+  roomPresenceRedisKey,
+  roomUserSocketsKey,
+  socketConnectionKey,
+} from '../redis/chat-room.keys';
 import { RedisService } from '../redis/redis.service';
-import { roomPresenceRedisKey } from '../rooms/room-presence.redis';
-
-/** Per-user socket refs within a room (same username may have multiple tabs). */
-export function roomUserSocketsKey(roomId: string, username: string): string {
-  return `chat:room:${roomId}:socks:${username}`;
-}
-
-/** Redis-backed mapping from Socket.IO id → session (no in-memory maps). */
-export function socketConnectionKey(socketId: string): string {
-  return `chat:socket:${socketId}`;
-}
 
 export type SocketRoomMeta = { roomId: string; username: string };
 

@@ -20,10 +20,14 @@ describe('RoomsService', () => {
   let insertChain: { returning: jest.Mock };
   let getActiveUserCounts: jest.Mock;
   let getActiveUserCount: jest.Mock;
+  let purgeRoomArtifacts: jest.Mock;
+  let publishRoomDeleted: jest.Mock;
 
   beforeEach(async () => {
     getActiveUserCounts = jest.fn().mockResolvedValue(new Map());
     getActiveUserCount = jest.fn().mockResolvedValue(0);
+    purgeRoomArtifacts = jest.fn().mockResolvedValue(undefined);
+    publishRoomDeleted = jest.fn().mockResolvedValue(undefined);
 
     insertChain = {
       returning: jest.fn(),
@@ -62,13 +66,13 @@ describe('RoomsService', () => {
           useValue: {
             getActiveUserCounts,
             getActiveUserCount,
-            clearPresence: jest.fn().mockResolvedValue(undefined),
+            purgeRoomArtifacts,
           },
         },
         {
           provide: ChatEventsPublisher,
           useValue: {
-            publishRoomDeleted: jest.fn().mockResolvedValue(undefined),
+            publishRoomDeleted,
           },
         },
       ],
@@ -135,6 +139,73 @@ describe('RoomsService', () => {
 
     expect(result.activeUsers).toBe(7);
     expect(getActiveUserCount).toHaveBeenCalledWith('room_a');
+  });
+
+  it('deleteRoom publishes room:deleted before DB delete, then purges Redis', async () => {
+    const order: string[] = [];
+    publishRoomDeleted.mockImplementation(() => {
+      order.push('publish');
+      return Promise.resolve();
+    });
+
+    const deleteWhere = jest.fn().mockImplementation(() => {
+      order.push('delete');
+      return Promise.resolve();
+    });
+
+    purgeRoomArtifacts.mockImplementation(() => {
+      order.push('purge');
+      return Promise.resolve();
+    });
+
+    const dbDelete = jest.fn().mockReturnValue({
+      where: deleteWhere,
+    });
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        RoomsService,
+        {
+          provide: DatabaseService,
+          useValue: {
+            db: {
+              select: jest.fn().mockReturnValue({
+                from: jest.fn().mockReturnValue({
+                  where: jest.fn().mockReturnValue({
+                    limit: jest.fn().mockResolvedValue([
+                      {
+                        id: 'room_x',
+                        createdByUserId: 'usr_1',
+                      },
+                    ]),
+                  }),
+                }),
+              }),
+              insert: jest.fn(),
+              delete: dbDelete,
+            },
+          },
+        },
+        {
+          provide: RoomPresenceService,
+          useValue: {
+            getActiveUserCounts,
+            getActiveUserCount,
+            purgeRoomArtifacts,
+          },
+        },
+        {
+          provide: ChatEventsPublisher,
+          useValue: { publishRoomDeleted },
+        },
+      ],
+    }).compile();
+
+    const deleteService = moduleRef.get(RoomsService);
+    await deleteService.deleteRoom('room_x', session);
+
+    expect(order).toEqual(['publish', 'delete', 'purge']);
+    expect(purgeRoomArtifacts).toHaveBeenCalledWith('room_x');
   });
 
   it('createRoom maps unique violation to ROOM_NAME_TAKEN', async () => {

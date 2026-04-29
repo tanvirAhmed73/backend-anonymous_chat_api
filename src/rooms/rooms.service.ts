@@ -124,7 +124,7 @@ export class RoomsService {
 
     await this.db.db.delete(rooms).where(eq(rooms.id, roomId));
 
-    await this.presence.clearPresence(roomId);
+    await this.presence.purgeRoomArtifacts(roomId);
 
     return { deleted: true };
   }

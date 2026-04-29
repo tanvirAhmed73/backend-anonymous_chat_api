@@ -1,14 +1,43 @@
 import { Injectable } from '@nestjs/common';
+import {
+  roomPresenceRedisKey,
+  socketConnectionKey,
+} from '../redis/chat-room.keys';
 import { RedisService } from '../redis/redis.service';
-import { roomPresenceRedisKey } from './room-presence.redis';
 
 @Injectable()
 export class RoomPresenceService {
   constructor(private readonly redis: RedisService) {}
 
-  /** Remove presence set when a room is deleted (best-effort cleanup). */
-  async clearPresence(roomId: string): Promise<void> {
-    await this.redis.client.del(roomPresenceRedisKey(roomId));
+  /**
+   * After the room row is removed: delete presence set, per-user socket sets,
+   * and `chat:socket:*` entries so Redis matches “room gone” (spec fan-out already happened).
+   */
+  async purgeRoomArtifacts(roomId: string): Promise<void> {
+    const redis = this.redis.client;
+    const pattern = `chat:room:${roomId}:socks:*`;
+    let cursor = '0';
+
+    do {
+      const [next, keys] = await redis.scan(
+        cursor,
+        'MATCH',
+        pattern,
+        'COUNT',
+        64,
+      );
+      cursor = next;
+
+      for (const socksKey of keys) {
+        const socketIds = await redis.smembers(socksKey);
+        if (socketIds.length > 0) {
+          await redis.del(...socketIds.map((id) => socketConnectionKey(id)));
+        }
+        await redis.del(socksKey);
+      }
+    } while (cursor !== '0');
+
+    await redis.del(roomPresenceRedisKey(roomId));
   }
 
   async getActiveUserCount(roomId: string): Promise<number> {
