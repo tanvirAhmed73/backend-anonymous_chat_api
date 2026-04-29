@@ -1,10 +1,4 @@
-import {
-  index,
-  pgTable,
-  text,
-  timestamp,
-  varchar,
-} from 'drizzle-orm/pg-core';
+import { index, pgTable, text, timestamp, varchar } from 'drizzle-orm/pg-core';
 
 /** Public ids use prefixes usr_*, room_*, msg_* (generated in application code). */
 export const users = pgTable('users', {
