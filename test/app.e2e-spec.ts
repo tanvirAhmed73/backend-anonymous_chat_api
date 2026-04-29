@@ -10,6 +10,7 @@ describe('AppController (e2e)', () => {
 
   beforeEach(async () => {
     process.env.DATABASE_URL ??= 'postgresql://chat:chat@localhost:5432/chat';
+    process.env.REDIS_URL ??= 'redis://localhost:6379';
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
@@ -18,6 +19,10 @@ describe('AppController (e2e)', () => {
     app = moduleFixture.createNestApplication();
     configureApp(app);
     await app.init();
+  });
+
+  afterEach(async () => {
+    await app.close();
   });
 
   it('/api/v1 (GET) returns success envelope', () => {
