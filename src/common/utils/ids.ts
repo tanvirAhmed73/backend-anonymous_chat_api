@@ -10,6 +10,11 @@ export function generateRoomId(): string {
   return `room_${randomBytes(9).toString('base64url')}`;
 }
 
+/** Public message id: `msg_` + random suffix (contract-style). */
+export function generateMessageId(): string {
+  return `msg_${randomBytes(9).toString('base64url')}`;
+}
+
 /** Opaque bearer token (stored only in Redis). */
 export function generateSessionToken(): string {
   return randomBytes(32).toString('base64url');

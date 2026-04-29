@@ -4,6 +4,7 @@ import { DatabaseError } from 'pg';
 import { DatabaseService } from '../db/database.service';
 import { ApiException } from '../common/exceptions/api.exception';
 import { ErrorCodes } from '../common/constants/error-codes';
+import { ChatEventsPublisher } from '../chat-events/chat-events.publisher';
 import { RoomPresenceService } from './room-presence.service';
 import { RoomsService } from './rooms.service';
 
@@ -35,6 +36,9 @@ describe('RoomsService', () => {
           limit: jest.fn().mockResolvedValue([]),
         }),
       }),
+      where: jest.fn().mockReturnValue({
+        limit: jest.fn().mockResolvedValue([]),
+      }),
     });
 
     const db = {
@@ -43,6 +47,9 @@ describe('RoomsService', () => {
       }),
       insert: jest.fn().mockReturnValue({
         values: jest.fn().mockReturnValue(insertChain),
+      }),
+      delete: jest.fn().mockReturnValue({
+        where: jest.fn().mockResolvedValue(undefined),
       }),
     };
 
@@ -55,6 +62,13 @@ describe('RoomsService', () => {
           useValue: {
             getActiveUserCounts,
             getActiveUserCount,
+            clearPresence: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: ChatEventsPublisher,
+          useValue: {
+            publishRoomDeleted: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],

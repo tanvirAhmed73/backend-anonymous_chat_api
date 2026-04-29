@@ -7,6 +7,7 @@ import { ErrorCodes } from '../common/constants/error-codes';
 import { generateRoomId } from '../common/utils/ids';
 import { DatabaseService } from '../db/database.service';
 import { rooms, users } from '../db/schema';
+import { ChatEventsPublisher } from '../chat-events/chat-events.publisher';
 import { RoomPresenceService } from './room-presence.service';
 
 export type RoomListItem = {
@@ -29,6 +30,7 @@ export class RoomsService {
   constructor(
     private readonly db: DatabaseService,
     private readonly presence: RoomPresenceService,
+    private readonly chatEvents: ChatEventsPublisher,
   ) {}
 
   async listRooms(): Promise<{ rooms: RoomListItem[] }> {
@@ -87,6 +89,44 @@ export class RoomsService {
       activeUsers,
       createdAt: this.toIso(row.createdAt),
     };
+  }
+
+  async deleteRoom(
+    roomId: string,
+    session: SessionUser,
+  ): Promise<{ deleted: true }> {
+    const [room] = await this.db.db
+      .select({
+        id: rooms.id,
+        createdByUserId: rooms.createdByUserId,
+      })
+      .from(rooms)
+      .where(eq(rooms.id, roomId))
+      .limit(1);
+
+    if (!room) {
+      throw new ApiException(
+        ErrorCodes.ROOM_NOT_FOUND,
+        `Room with id ${roomId} does not exist`,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    if (room.createdByUserId !== session.id) {
+      throw new ApiException(
+        ErrorCodes.FORBIDDEN,
+        'Only the room creator can delete this room',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    await this.chatEvents.publishRoomDeleted(roomId);
+
+    await this.db.db.delete(rooms).where(eq(rooms.id, roomId));
+
+    await this.presence.clearPresence(roomId);
+
+    return { deleted: true };
   }
 
   async createRoom(name: string, session: SessionUser): Promise<RoomCreated> {

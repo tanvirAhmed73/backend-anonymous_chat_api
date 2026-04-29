@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -25,6 +26,12 @@ export class RoomsController {
   @Post()
   create(@Body() body: CreateRoomDto, @CurrentSession() user: SessionUser) {
     return this.rooms.createRoom(body.name, user);
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @Delete(':id')
+  remove(@Param('id') id: string, @CurrentSession() user: SessionUser) {
+    return this.rooms.deleteRoom(id, user);
   }
 
   @Get(':id')

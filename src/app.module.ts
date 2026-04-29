@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './db/database.module';
 import { RedisModule } from './redis/redis.module';
+import { MessagesModule } from './messages/messages.module';
 import { RoomsModule } from './rooms/rooms.module';
 
 @Module({
@@ -14,6 +15,7 @@ import { RoomsModule } from './rooms/rooms.module';
     RedisModule,
     AuthModule,
     RoomsModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

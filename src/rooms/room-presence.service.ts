@@ -6,6 +6,11 @@ import { roomPresenceRedisKey } from './room-presence.redis';
 export class RoomPresenceService {
   constructor(private readonly redis: RedisService) {}
 
+  /** Remove presence set when a room is deleted (best-effort cleanup). */
+  async clearPresence(roomId: string): Promise<void> {
+    await this.redis.client.del(roomPresenceRedisKey(roomId));
+  }
+
   async getActiveUserCount(roomId: string): Promise<number> {
     return this.redis.client.scard(roomPresenceRedisKey(roomId));
   }
