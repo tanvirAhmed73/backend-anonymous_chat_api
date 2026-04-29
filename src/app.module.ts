@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './db/database.module';
 import { RedisModule } from './redis/redis.module';
+import { ChatModule } from './chat/chat.module';
 import { MessagesModule } from './messages/messages.module';
 import { RoomsModule } from './rooms/rooms.module';
 
@@ -16,6 +17,7 @@ import { RoomsModule } from './rooms/rooms.module';
     AuthModule,
     RoomsModule,
     MessagesModule,
+    ...(process.env.DISABLE_WEBSOCKET === 'true' ? [] : [ChatModule]),
   ],
   controllers: [AppController],
   providers: [AppService],
