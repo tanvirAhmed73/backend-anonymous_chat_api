@@ -5,6 +5,11 @@ export function generateUserId(): string {
   return `usr_${randomBytes(9).toString('base64url')}`;
 }
 
+/** Public room id: `room_` + random suffix (contract-style). */
+export function generateRoomId(): string {
+  return `room_${randomBytes(9).toString('base64url')}`;
+}
+
 /** Opaque bearer token (stored only in Redis). */
 export function generateSessionToken(): string {
   return randomBytes(32).toString('base64url');
