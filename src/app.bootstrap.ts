@@ -5,6 +5,13 @@ import { createValidationExceptionFactory } from './common/pipes/validation-exce
 
 /** Shared HTTP setup for main entry and e2e tests. */
 export function configureApp(app: INestApplication): void {
+  app.enableCors({
+    origin: true,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   app.setGlobalPrefix('api/v1');
 
   app.useGlobalFilters(new HttpExceptionFilter());
