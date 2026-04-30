@@ -63,7 +63,7 @@ See the interview brief / Postman collection you were given for full contract te
 |--------|---------|
 | `npm run start:dev` | Dev server with reload |
 | `npm run build` | Compile to `dist/` |
-| `npm run start:prod` | Run compiled app (`node dist/main`) |
+| `npm run start:prod` | Run compiled app (`node dist/src/main.js`) |
 | `npm run db:generate` | Generate Drizzle migrations from schema |
 | `npm run db:migrate` | Apply migrations |
 | `npm run test` | Unit tests |
@@ -79,7 +79,7 @@ See the interview brief / Postman collection you were given for full contract te
 
 Deploy this repo to any platform that provides:
 
-1. **Node** process running `npm run build` then `npm run start:prod` (or `node dist/main`).
+1. **Node** process running `npm run build` then `npm run start:prod` (or `node dist/src/main.js`).
 2. **PostgreSQL** — set `DATABASE_URL`.
 3. **Redis** — set `REDIS_URL` (required for sessions, presence, Socket.IO adapter, and `chat:events` pub/sub).
 4. **WebSockets** — enable sticky sessions if you run **multiple** HTTP/WebSocket instances behind a load balancer (same requirement as Socket.IO horizontal scaling).
